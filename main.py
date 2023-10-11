@@ -26,8 +26,8 @@ clock = pygame.time.Clock()
 background_img = pygame.image.load(os.path.join("img", "background.png")).convert()
 player_img = pygame.image.load(os.path.join("img", "player.png")).convert()
 player_mini_img = pygame.transform.scale(player_img, (25, 19))
-pygame.display.set_icon(player_mini_img)
 player_mini_img.set_colorkey(BLACK)
+pygame.display.set_icon(player_mini_img)
 bullet_img = pygame.image.load(os.path.join("img", "bullet.png")).convert()
 rock_imgs = []
 for i in range(7):
@@ -44,9 +44,10 @@ for i in range(9):
     ).convert()
     player_expl_img.set_colorkey(BLACK)
     expl_anim["player"].append(player_expl_img)
-power_imgs = {}
-power_imgs["shield"] = pygame.image.load(os.path.join("img", "shield.png")).convert()
-power_imgs["gun"] = pygame.image.load(os.path.join("img", "gun.png")).convert()
+power_imgs = {
+    "shield": pygame.image.load(os.path.join("img", "shield.png")).convert(),
+    "gun": pygame.image.load(os.path.join("img", "gun.png")).convert(),
+}
 
 # load sounds
 shoot_sound = pygame.mixer.Sound(os.path.join("sound", "shoot.wav"))
@@ -59,7 +60,6 @@ expl_sounds = [
 ]
 pygame.mixer.music.load(os.path.join("sound", "background.ogg"))
 pygame.mixer.music.set_volume(0.4)
-
 
 font_name = os.path.join("font.ttf")
 
@@ -74,9 +74,9 @@ def draw_text(surf, text, size, x, y):
 
 
 def new_rock():
-    r = Rock()
-    all_sprites.add(r)
-    rocks.add(r)
+    rock = Rock()
+    all_sprites.add(rock)
+    rocks.add(rock)
 
 
 def draw_health(surf, hp, x, y):
@@ -96,7 +96,7 @@ def draw_lives(surf, lives, img, x, y):
         img_rect = img.get_rect()
         img_rect.x = x + 30 * i
         img_rect.y = y
-        surf.built(img, img_rect)
+        surf.blit(img, img_rect)
 
 
 def draw_init():
@@ -129,7 +129,7 @@ class Player(pygame.sprite.Sprite):
         self.radius = 20
         self.rect.centerx = WIDTH / 2
         self.rect.bottom = HEIGHT - 10
-        self.speed_x = 8
+        self.speedx = 8
         self.health = 100
         self.lives = 3
         self.hidden = False
@@ -150,18 +150,14 @@ class Player(pygame.sprite.Sprite):
 
         key_pressed = pygame.key.get_pressed()
         if key_pressed[pygame.K_RIGHT]:
-            self.rect.x += self.speed_x
+            self.rect.x += self.speedx
         if key_pressed[pygame.K_LEFT]:
-            self.rect.x -= self.speed_x
+            self.rect.x -= self.speedx
 
         if self.rect.right > WIDTH:
             self.rect.right = WIDTH
         if self.rect.left < 0:
             self.rect.left = 0
-
-        self.rect.x += 2
-        if self.rect.left > WIDTH:
-            self.rect.right = 0
 
     def shoot(self):
         if not self.hidden:
@@ -195,7 +191,6 @@ class Rock(pygame.sprite.Sprite):
         self.image_ori = random.choice(rock_imgs)
         self.image_ori.set_colorkey(BLACK)
         self.image = self.image_ori.copy()
-
         self.rect = self.image.get_rect()
         self.radius = int(self.rect.width * 0.85 / 2)
         self.rect.x = random.randrange(0, WIDTH - self.rect.width)
@@ -219,7 +214,7 @@ class Rock(pygame.sprite.Sprite):
         self.rect.x += self.speedx
         if self.rect.top > HEIGHT or self.rect.left > WIDTH or self.rect.right < 0:
             self.rect.x = random.randrange(0, WIDTH - self.rect.width)
-            self.rect.y = random.randrange(100, -40)
+            self.rect.y = random.randrange(-100, -40)
             self.speedy = random.randrange(2, 10)
             self.speedx = random.randrange(-3, 3)
 
@@ -277,7 +272,7 @@ class Power(pygame.sprite.Sprite):
 
     def update(self):
         self.rect.y += self.speedy
-        if self.rect.top < HEIGHT:
+        if self.rect.top > HEIGHT:
             self.kill()
 
 
@@ -300,7 +295,6 @@ while running:
         all_sprites.add(player)
         for i in range(8):
             new_rock()
-
         score = 0
 
     clock.tick(FPS)
@@ -311,6 +305,7 @@ while running:
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 player.shoot()
+
     # game update
     all_sprites.update()
 
@@ -333,26 +328,26 @@ while running:
     )
     for hit in hits:
         new_rock()
-        player.health -= hit.radius
+        player.health -= hit.radius * 2
         expl = Explosion(hit.rect.center, "sm")
         all_sprites.add(expl)
         if player.health <= 0:
             death_expl = Explosion(player.rect.center, "player")
             all_sprites.add(death_expl)
             die_sound.play()
-            player.health -= 1
+            player.lives -= 1
             player.health = 100
             player.hide()
 
     # treasure and bullet collection
-    hits = pygame.sprite.groupcollide(player, powers, True)
+    hits = pygame.sprite.spritecollide(player, powers, True)
     for hit in hits:
         if hit.type == "shield":
             player.health += 20
             if player.health > 100:
                 player.health = 100
             shield_sound.play()
-        if hit.type == "gun":
+        elif hit.type == "gun":
             player.gunup()
             gun_sound.play()
 
@@ -361,6 +356,7 @@ while running:
 
     # screen display
     screen.fill(BLACK)
+    screen.blit(background_img, (0, 0))
     all_sprites.draw(screen)
     draw_text(screen, str(score), 18, WIDTH / 2, 10)
     draw_health(screen, player.health, 5, 15)
