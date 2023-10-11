@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Black">
+    <option name="enabledOnReformat" value="true" />
+    <option name="enabledOnSave" value="true" />
+    <option name="sdkUUID" value="583e2e3f-30d6-430d-a70c-4cc21f332434" />
+  </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.11 (pygame)" project-jdk-type="Python SDK" />
+</project>
